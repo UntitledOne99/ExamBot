@@ -3,7 +3,7 @@ import Config
 import logging
 import random
 
-from Config import STUB as stub
+from Config import STUB as stub_text
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters import CommandStart, Command
@@ -13,7 +13,13 @@ bot = Bot(token=Config.TOKEN)
 
 dp = Dispatcher()
 question_collection = {}
-key = 'Unique_key'
+key = 'Unique'
+temp = 0
+
+
+def stub():
+    res = random.choice(stub_text.split(' '))
+    return res
 
 
 @dp.message(CommandStart())
@@ -23,20 +29,17 @@ async def handle_start(message: types.Message):
 
 @dp.message(Command("exam"))
 async def question_factory(message: types.Message):
-    stub_value = random.choice(stub.split(' '))
-    form = Form(stub_value, key, [stub_value,stub_value,stub_value])
     builder = InlineKeyboardBuilder()
+    form = Form(stub(), key, [stub(), stub(), stub()])
     form.make_a_question(builder)
-    await message.answer(
-        f"{form.question} ?",
-        reply_markup=builder.as_markup()
-    )
+    await message.answer(f"{form.question} ?", reply_markup=builder.as_markup())
 
 
 @dp.callback_query((F.data).endswith(f'{key}'))
 async def user_answer_handler(callback: types.CallbackQuery):
-    question_collection[callback.message.text] = callback.data.split(' ')[0]
-    await question_factory(callback.message)
+    if callback.message.text not in question_collection.keys():
+        question_collection[callback.message.text] = callback.data.split(' ')[0]
+        await question_factory(callback.message)
     print(question_collection.items())
 
 
